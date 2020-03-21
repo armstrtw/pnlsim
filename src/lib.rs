@@ -102,33 +102,10 @@ impl Mul<f32> for Value {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FuturesContract {
-    ticker: String,
-    point_value: i32,
-    currency: Currency,
-}
-
-impl FuturesContract {
-    pub fn new(ticker: String, point_value: i32, currency: Currency) -> Self {
-        Self {
-            ticker,
-            point_value,
-            currency,
-        }
-    }
-    pub fn value(&self, price: f32) -> Value {
-        Value {
-            value: self.point_value as f32 * price,
-            currency: self.currency,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Security {
     Cash(Currency),
     Equity(String, Currency),
-    Future(FuturesContract),
+    Future(String, i32, Currency),
     FxFrd(String, NaiveDate),
 }
 
@@ -144,9 +121,9 @@ impl Security {
                 value: price,
                 currency: *ccy,
             },
-            Security::Future(f) => Value {
-                value: f.point_value as f32 * price,
-                currency: f.currency,
+            Security::Future(_, pv, ccy) => Value {
+                value: *pv as f32 * price,
+                currency: *ccy,
             },
             _ => Value {
                 value: NAN,
@@ -158,7 +135,7 @@ impl Security {
         match self {
             Security::Cash(_) => true,
             Security::Equity(_, _) => true,
-            Security::Future(_) => false,
+            Security::Future(_, _, _) => false,
             Security::FxFrd(_, _) => false,
         }
     }

@@ -7,7 +7,7 @@ fn test_basic_tx() {
     let mut portfolio = Portfolio::new();
     assert!(portfolio.is_empty());
 
-    let fv = Future(FuturesContract::new(String::from("FVU0"), 1000, USD));
+    let fv = Future(String::from("FVU0"), 1000, USD);
     // buy 100FV@120 cumulative position should be 100
     tx(&mut portfolio, &fv, 100.0, 120.0);
     assert_eq!(portfolio.len(), 1);
@@ -57,7 +57,7 @@ fn test_basic_tx() {
 fn test_closeout_same_price() {
     let mut portfolio = Portfolio::new();
     assert!(portfolio.is_empty());
-    let fv = Future(FuturesContract::new(String::from("FVU0"), 1000, USD));
+    let fv = Future(String::from("FVU0"), 1000, USD);
 
     tx(&mut portfolio, &fv, 100.0, 100.0);
     assert_eq!(portfolio.len(), 1);
@@ -78,7 +78,7 @@ fn test_position_flip_cost_basis() {
     let mut portfolio = Portfolio::new();
     assert!(portfolio.is_empty());
 
-    let fv = Future(FuturesContract::new(String::from("FVU0"), 1000, USD));
+    let fv = Future(String::from("FVU0"), 1000, USD);
 
     tx(&mut portfolio, &fv, 100.0, 101.0);
     assert_eq!(portfolio.len(), 1);
