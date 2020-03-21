@@ -1,0 +1,11 @@
+[package]
+name = "pnlsim"
+version = "0.1.0"
+authors = ["Whit Armstrong <armstrong.whit@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+csv = "1.1"
+chrono = { version = "0.4", features = ["serde"] }
