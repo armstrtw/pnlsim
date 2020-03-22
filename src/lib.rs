@@ -103,10 +103,10 @@ impl Mul<f32> for Value {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Security {
-    Cash(Currency),
-    Equity(String, Currency),
-    Future(String, i32, Currency),
-    FxFrd(String, NaiveDate),
+    Cash(Currency),                       // EUR
+    Equity(String, Currency),             // IBM USD
+    Future(String, i32, Currency),        // FVU0 1000 USD
+    FxFrd(Currency, Currency, NaiveDate), // USD JPY 2020-04-01
 }
 
 impl Security {
@@ -125,9 +125,9 @@ impl Security {
                 value: *pv as f32 * price,
                 currency: *ccy,
             },
-            _ => Value {
-                value: NAN,
-                currency: USD,
+            Security::FxFrd(_, settle_ccy, _) => Value {
+                value: price,
+                currency: *settle_ccy,
             },
         }
     }
@@ -136,7 +136,7 @@ impl Security {
             Security::Cash(_) => true,
             Security::Equity(_, _) => true,
             Security::Future(_, _, _) => false,
-            Security::FxFrd(_, _) => false,
+            Security::FxFrd(_, _, _) => false,
         }
     }
 }
