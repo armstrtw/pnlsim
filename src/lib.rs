@@ -114,6 +114,8 @@ impl Security {
     fn value(&self, price: f32) -> Value {
         match self {
             Security::Cash(ccy) => Value {
+                // cash is always valued at 1.0
+                // pnl occurs from the conversion to the base currency
                 value: 1.0,
                 currency: *ccy,
             },
