@@ -2,9 +2,50 @@ use chrono::NaiveDate;
 use std::collections::HashMap;
 use std::f32::NAN;
 use std::ops::{Add, Mul, Sub};
-use Currency::*;
 
 pub type Portfolio = HashMap<Security, Holding>;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Security {
+    Cash(Currency),                       // EUR
+    Equity(String, Currency),             // IBM USD
+    Future(String, i32, Currency),        // FVU0 1000 USD
+    FxFrd(Currency, Currency, NaiveDate), // USD JPY 2020-04-01
+}
+
+impl Security {
+    // price or marks map (for cross ccy for instance)
+    fn value(&self, price: f32) -> Value {
+        match self {
+            Security::Cash(ccy) => Value {
+                // cash is always valued at 1.0
+                // pnl occurs from the conversion to the base currency
+                value: 1.0,
+                currency: *ccy,
+            },
+            Security::Equity(_, ccy) => Value {
+                value: price,
+                currency: *ccy,
+            },
+            Security::Future(_, pv, ccy) => Value {
+                value: *pv as f32 * price,
+                currency: *ccy,
+            },
+            Security::FxFrd(_, settle_ccy, _) => Value {
+                value: price,
+                currency: *settle_ccy,
+            },
+        }
+    }
+    fn cash_settled(&self) -> bool {
+        match self {
+            Security::Cash(_) => true,
+            Security::Equity(_, _) => true,
+            Security::Future(_, _, _) => false,
+            Security::FxFrd(_, _, _) => false,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Currency {
@@ -97,48 +138,6 @@ impl Mul<f32> for Value {
         Value {
             value: self.value * other,
             currency: self.currency,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Security {
-    Cash(Currency),                       // EUR
-    Equity(String, Currency),             // IBM USD
-    Future(String, i32, Currency),        // FVU0 1000 USD
-    FxFrd(Currency, Currency, NaiveDate), // USD JPY 2020-04-01
-}
-
-impl Security {
-    // price or marks map (for cross ccy for instance)
-    fn value(&self, price: f32) -> Value {
-        match self {
-            Security::Cash(ccy) => Value {
-                // cash is always valued at 1.0
-                // pnl occurs from the conversion to the base currency
-                value: 1.0,
-                currency: *ccy,
-            },
-            Security::Equity(_, ccy) => Value {
-                value: price,
-                currency: *ccy,
-            },
-            Security::Future(_, pv, ccy) => Value {
-                value: *pv as f32 * price,
-                currency: *ccy,
-            },
-            Security::FxFrd(_, settle_ccy, _) => Value {
-                value: price,
-                currency: *settle_ccy,
-            },
-        }
-    }
-    fn cash_settled(&self) -> bool {
-        match self {
-            Security::Cash(_) => true,
-            Security::Equity(_, _) => true,
-            Security::Future(_, _, _) => false,
-            Security::FxFrd(_, _, _) => false,
         }
     }
 }
