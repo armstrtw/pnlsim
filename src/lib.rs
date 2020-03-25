@@ -8,6 +8,7 @@ pub type Portfolio = HashMap<Security, Holding>;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Security {
     Cash(Currency),                       // EUR
+    ForwardCash(Currency, NaiveDate),     // JPY 2020-04-01
     Equity(String, Currency),             // IBM USD
     Future(String, i32, Currency),        // FVU0 1000 USD
     FxFrd(Currency, Currency, NaiveDate), // USD JPY 2020-04-01
@@ -20,6 +21,10 @@ impl Security {
             Security::Cash(ccy) => Value {
                 // cash is always valued at 1.0
                 // pnl occurs from the conversion to the base currency
+                value: 1.0,
+                currency: *ccy,
+            },
+            Security::ForwardCash(ccy, _) => Value {
                 value: 1.0,
                 currency: *ccy,
             },
@@ -40,6 +45,7 @@ impl Security {
     fn cash_settled(&self) -> bool {
         match self {
             Security::Cash(_) => true,
+            Security::ForwardCash(_, _) => false,
             Security::Equity(_, _) => true,
             Security::Future(_, _, _) => false,
             Security::FxFrd(_, _, _) => false,
@@ -206,13 +212,18 @@ pub fn tx(
     };
 
     match cash {
+        // fx frds should settle to frd cash
         Some(cf) if cf.value != 0.0 => {
-            let cash_holding = portfolio
-                .entry(Security::Cash(cf.currency))
+            let settlement_security = match s {
+                Security::FxFrd(_, sccy, date) => Security::ForwardCash(*sccy, *date),
+                _ => Security::Cash(cf.currency),
+            };
+            let settlement_holding = portfolio
+                .entry(settlement_security.clone())
                 .or_insert(Holding::default());
-            cash_holding.quantity += cf.value;
-            if cash_holding.quantity == 0.0 {
-                portfolio.remove(&Security::Cash(cf.currency));
+            settlement_holding.quantity += cf.value;
+            if settlement_holding.quantity == 0.0 {
+                portfolio.remove(&settlement_security.clone());
             }
         }
         _ => {}
